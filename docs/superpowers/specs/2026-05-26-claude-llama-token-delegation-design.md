@@ -129,3 +129,6 @@ claude-llama/
    the same binary, for working when Claude is rate-limited.
 2. Opt-in disk-writing edit mode.
 3. Workspace-root path restriction.
+4. Multiple-model support: route to a different local model depending on the
+   task at hand (e.g., a coding-tuned model for transforms, a small fast model
+   for trivial classification), with optional per-call model override.
