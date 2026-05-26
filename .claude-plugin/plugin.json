@@ -1,0 +1,8 @@
+{
+  "name": "claude-llama",
+  "description": "help save tokens by calling to llama api",
+  "version": "1.0.0",
+  "author": {
+    "name": "Zoa Hickenlooper"
+  }
+}
