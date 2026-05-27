@@ -84,11 +84,18 @@ func TestReadAll(t *testing.T) {
 }
 
 func TestEstimateTokens(t *testing.T) {
-	if got := EstimateTokens("12345678"); got != 2 {
-		t.Errorf("EstimateTokens(8 chars) = %d, want 2", got)
-	}
-	if got := EstimateTokens(""); got != 0 {
-		t.Errorf("EstimateTokens(\"\") = %d, want 0", got)
+	for _, tc := range []struct {
+		in   string
+		want int
+	}{
+		{"", 0},
+		{"1", 1},
+		{"12345", 2},
+		{"12345678", 2},
+	} {
+		if got := EstimateTokens(tc.in); got != tc.want {
+			t.Errorf("EstimateTokens(%q) = %d, want %d", tc.in, got, tc.want)
+		}
 	}
 }
 
@@ -104,6 +111,9 @@ func TestChunkPacksSmallDocs(t *testing.T) {
 	if !strings.Contains(chunks[0], "// file: a") || !strings.Contains(chunks[0], "// file: b") {
 		t.Errorf("chunk missing file headers: %q", chunks[0])
 	}
+	if !strings.Contains(chunks[0], "aaaa") || !strings.Contains(chunks[0], "bbbb") {
+		t.Errorf("chunk missing document content: %q", chunks[0])
+	}
 }
 
 func TestChunkSplitsOversizedDoc(t *testing.T) {
@@ -111,5 +121,11 @@ func TestChunkSplitsOversizedDoc(t *testing.T) {
 	chunks := Chunk(docs, 25) // 100 chars/chunk => multiple chunks
 	if len(chunks) < 2 {
 		t.Fatalf("got %d chunks, want >= 2", len(chunks))
+	}
+}
+
+func TestChunkEmptyDocs(t *testing.T) {
+	if chunks := Chunk(nil, 1000); chunks != nil {
+		t.Errorf("Chunk(nil) = %v, want nil", chunks)
 	}
 }

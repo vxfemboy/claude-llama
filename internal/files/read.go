@@ -95,10 +95,10 @@ func EstimateTokens(s string) int {
 // maxTokens. Each document is prefixed with a "// file: <path>" header.
 // A single document larger than the budget is split across multiple chunks.
 func Chunk(docs []Document, maxTokens int) []string {
-	maxChars := maxTokens * 4
-	if maxChars <= 0 {
-		maxChars = 1
+	if maxTokens <= 0 {
+		panic(fmt.Sprintf("Chunk: maxTokens must be positive, got %d", maxTokens))
 	}
+	maxChars := maxTokens * 4
 	var chunks []string
 	var b strings.Builder
 	flush := func() {
@@ -117,6 +117,9 @@ func Chunk(docs []Document, maxTokens int) []string {
 			continue
 		}
 		flush()
+		// Byte-slice the oversized document. This may split a multibyte UTF-8
+		// rune at a boundary; acceptable for LLM consumption of mostly-ASCII
+		// source files in v1.
 		for start := 0; start < len(body); start += maxChars {
 			end := start + maxChars
 			if end > len(body) {
