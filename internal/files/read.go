@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 type Document struct {
@@ -31,7 +32,10 @@ func Expand(paths []string) ([]string, error) {
 			return nil, fmt.Errorf("bad glob %q: %w", p, err)
 		}
 		if matches == nil {
-			matches = []string{p} // no glob match: treat as literal path
+			if hasGlobMeta(p) {
+				return nil, fmt.Errorf("glob %q matched no files", p)
+			}
+			matches = []string{p} // literal path: let os.Stat produce the error
 		}
 		for _, m := range matches {
 			info, err := os.Stat(m)
@@ -58,6 +62,11 @@ func Expand(paths []string) ([]string, error) {
 	}
 	sort.Strings(out)
 	return out, nil
+}
+
+// hasGlobMeta reports whether p contains any filepath glob metacharacters.
+func hasGlobMeta(p string) bool {
+	return strings.ContainsAny(p, "*?[")
 }
 
 // ReadAll expands the given paths and reads each resulting file into a Document.

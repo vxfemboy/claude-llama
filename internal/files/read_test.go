@@ -48,6 +48,27 @@ func TestExpandMissingPathErrors(t *testing.T) {
 	}
 }
 
+func TestExpandDeduplicates(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, "a.txt"), "A")
+	p := filepath.Join(dir, "a.txt")
+	got, err := Expand([]string{p, p})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("Expand with duplicate path got %d files, want 1: %v", len(got), got)
+	}
+}
+
+func TestExpandGlobNoMatchErrors(t *testing.T) {
+	dir := t.TempDir()
+	_, err := Expand([]string{filepath.Join(dir, "*.go")})
+	if err == nil {
+		t.Fatal("expected error for glob matching no files, got nil")
+	}
+}
+
 func TestReadAll(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, filepath.Join(dir, "a.txt"), "hello")
