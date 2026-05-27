@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "claude-llama": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/claude-llama-mcp",
+      "args": [],
+      "env": {
+        "LLAMA_API_URL": "http://hack-mini:8080",
+        "LLAMA_MODEL": "unsloth/Qwen3.5-9B-GGUF:Q4_K_M"
+      }
+    }
+  }
+}
