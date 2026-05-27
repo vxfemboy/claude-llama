@@ -54,21 +54,14 @@ func (s *Service) mapReduce(ctx context.Context, paths []string, mapSystem, redu
 }
 
 func (s *Service) Summarize(ctx context.Context, paths []string, focus string) (string, error) {
-	mapSys := "You are a precise summarizer. Summarize the following file contents concisely, preserving key facts, names, and structure. Output only the summary."
-	if strings.TrimSpace(focus) != "" {
-		mapSys += " Focus especially on: " + focus + "."
-	}
-	reduceSys := "Combine the following partial summaries into one coherent, concise summary. Remove redundancy. Output only the summary."
-	return s.mapReduce(ctx, paths, mapSys, reduceSys)
+	return s.mapReduce(ctx, paths, summarizeMapPrompt(strings.TrimSpace(focus)), summarizeReducePrompt())
 }
 
 func (s *Service) Extract(ctx context.Context, paths []string, query string) (string, error) {
 	if strings.TrimSpace(query) == "" {
 		return "", fmt.Errorf("query must not be empty")
 	}
-	mapSys := fmt.Sprintf("Extract only the parts of the following file contents relevant to this query: %q. Quote relevant snippets with their file path. If nothing is relevant, say so briefly. Output only the relevant findings.", query)
-	reduceSys := fmt.Sprintf("Merge the following extracted findings into a single answer to the query: %q. Keep file references and remove duplicates.", query)
-	return s.mapReduce(ctx, paths, mapSys, reduceSys)
+	return s.mapReduce(ctx, paths, extractMapPrompt(query), extractReducePrompt(query))
 }
 
 func (s *Service) Ask(ctx context.Context, prompt string, paths []string) (string, error) {
@@ -76,9 +69,7 @@ func (s *Service) Ask(ctx context.Context, prompt string, paths []string) (strin
 		return "", fmt.Errorf("prompt must not be empty")
 	}
 	if len(paths) == 0 {
-		return s.llm.Complete(ctx, "You are a helpful assistant. Follow the instruction precisely and output only the result.", prompt)
+		return s.llm.Complete(ctx, askNoContextPrompt(), prompt)
 	}
-	mapSys := "You are a helpful assistant. Apply this instruction to the following file contents and output only the result.\n\nInstruction: " + prompt
-	reduceSys := "Combine the following partial results into one coherent result for this instruction. Output only the result.\n\nInstruction: " + prompt
-	return s.mapReduce(ctx, paths, mapSys, reduceSys)
+	return s.mapReduce(ctx, paths, askMapPrompt(prompt), askReducePrompt(prompt))
 }

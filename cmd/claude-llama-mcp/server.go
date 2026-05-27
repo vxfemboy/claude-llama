@@ -30,21 +30,21 @@ func NewServer(svc *tools.Service) *mcp.Server {
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "llama_summarize",
-		Description: "Summarize files using a local model WITHOUT reading them into your own context. Use this instead of reading large files when you only need a summary. Provide file paths, globs, or directories; the server reads and summarizes them locally and returns only the summary.",
+		Description: "Summarize files, directories, or globs using a local model WITHOUT reading them into your own context — use this instead of reading large files when you only need an overview. The server reads the files locally and returns only a concise summary.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, in SummarizeInput) (*mcp.CallToolResult, any, error) {
 		return result(svc.Summarize(ctx, in.Paths, in.Focus))
 	})
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "llama_extract",
-		Description: "Search files with a local model and return only the snippets/answers matching a query, WITHOUT reading the files into your own context. Use instead of reading large or numerous files when you only need specific information.",
+		Description: "Search files/directories/globs with a local model and return ONLY the snippets and answers matching a query, WITHOUT reading the files into your own context. Use instead of reading large or numerous files when you need specific information.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, in ExtractInput) (*mcp.CallToolResult, any, error) {
 		return result(svc.Extract(ctx, in.Paths, in.Query))
 	})
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "llama_ask",
-		Description: "Delegate a self-contained task (drafting, classification, mechanical transforms, Q&A) to a local model to save tokens. Optionally provide file paths/globs/directories as context, read locally by the server. Returns text only; it does not write files.",
+		Description: "Delegate a self-contained task (drafting, classification, mechanical transforms, Q&A) to a local model to save tokens. Optionally provide file paths/globs/directories as context (read locally by the server). Returns text only; it does not write files.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, in AskInput) (*mcp.CallToolResult, any, error) {
 		return result(svc.Ask(ctx, in.Prompt, in.Paths))
 	})

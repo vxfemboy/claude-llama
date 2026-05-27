@@ -106,3 +106,16 @@ func TestTooLargeErrors(t *testing.T) {
 		t.Fatal("expected ceiling error for oversized input")
 	}
 }
+
+func TestSummarizePromptHasFormatGuidance(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, "a.txt"), "content")
+	llm := &fakeLLM{}
+	svc := NewService(llm, newGuard(t, dir), 1000)
+	if _, err := svc.Summarize(context.Background(), []string{filepath.Join(dir, "a.txt")}, ""); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(llm.systems[0], "only the summary") {
+		t.Errorf("summarize prompt missing output-format guidance: %q", llm.systems[0])
+	}
+}
