@@ -58,14 +58,16 @@ func (s *Service) Summarize(ctx context.Context, paths []string, focus string) (
 }
 
 func (s *Service) Extract(ctx context.Context, paths []string, query string) (string, error) {
-	if strings.TrimSpace(query) == "" {
+	query = strings.TrimSpace(query)
+	if query == "" {
 		return "", fmt.Errorf("query must not be empty")
 	}
 	return s.mapReduce(ctx, paths, extractMapPrompt(query), extractReducePrompt(query))
 }
 
 func (s *Service) Ask(ctx context.Context, prompt string, paths []string) (string, error) {
-	if strings.TrimSpace(prompt) == "" {
+	prompt = strings.TrimSpace(prompt)
+	if prompt == "" {
 		return "", fmt.Errorf("prompt must not be empty")
 	}
 	if len(paths) == 0 {
