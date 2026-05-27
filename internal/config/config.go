@@ -11,6 +11,7 @@ type Config struct {
 	Model          string
 	MaxInputTokens int
 	Timeout        time.Duration
+	WorkspaceRoot  string
 }
 
 const (
@@ -26,7 +27,15 @@ func Load() Config {
 		Model:          getEnv("LLAMA_MODEL", defaultModel),
 		MaxInputTokens: getEnvInt("LLAMA_MAX_INPUT_TOKENS", defaultMaxInputTokens),
 		Timeout:        time.Duration(getEnvInt("LLAMA_TIMEOUT_SECONDS", defaultTimeoutSeconds)) * time.Second,
+		WorkspaceRoot:  getEnv("LLAMA_WORKSPACE_ROOT", defaultWorkspaceRoot()),
 	}
+}
+
+func defaultWorkspaceRoot() string {
+	if wd, err := os.Getwd(); err == nil {
+		return wd
+	}
+	return "."
 }
 
 func getEnv(key, def string) string {

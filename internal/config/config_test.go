@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"testing"
 	"time"
 )
@@ -46,5 +47,18 @@ func TestLoadOverrides(t *testing.T) {
 	}
 	if cfg.Timeout != 30*time.Second {
 		t.Errorf("Timeout = %v", cfg.Timeout)
+	}
+}
+
+func TestLoadWorkspaceRoot(t *testing.T) {
+	t.Setenv("LLAMA_WORKSPACE_ROOT", "/tmp/some-root")
+	if got := Load().WorkspaceRoot; got != "/tmp/some-root" {
+		t.Errorf("WorkspaceRoot = %q, want /tmp/some-root", got)
+	}
+
+	t.Setenv("LLAMA_WORKSPACE_ROOT", "")
+	wd, _ := os.Getwd()
+	if got := Load().WorkspaceRoot; got != wd {
+		t.Errorf("WorkspaceRoot default = %q, want cwd %q", got, wd)
 	}
 }
