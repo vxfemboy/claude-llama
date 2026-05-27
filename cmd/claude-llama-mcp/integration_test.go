@@ -21,7 +21,8 @@ func TestSmoke(t *testing.T) {
 	svc := tools.NewService(llama.New(cfg.APIURL, cfg.Model, cfg.Timeout), cfg.MaxInputTokens)
 	server := NewServer(svc)
 
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	clientT, serverT := mcp.NewInMemoryTransports()
 
 	go func() { _ = server.Run(ctx, serverT) }()
