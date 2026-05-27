@@ -19,13 +19,6 @@ func (f *fakeLLM) Complete(ctx context.Context, system, user string) (string, er
 	return "reply:" + user[:min(len(user), 8)], nil
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func writeFile(t *testing.T, path, content string) {
 	t.Helper()
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
@@ -61,14 +54,21 @@ func TestSummarizeMapReduce(t *testing.T) {
 	if len(llm.users) < 3 {
 		t.Fatalf("expected map+reduce calls (>=3), got %d", len(llm.users))
 	}
+	last := llm.systems[len(llm.systems)-1]
+	if !strings.Contains(last, "Combine") {
+		t.Errorf("reduce step should use the combine prompt, got system %q", last)
+	}
 }
 
 func TestExtractEmptyQueryErrors(t *testing.T) {
 	llm := &fakeLLM{}
 	svc := NewService(llm, 1000)
-	_, err := svc.Extract(context.Background(), []string{"whatever"}, "  ")
+	_, err := svc.Extract(context.Background(), nil, "  ")
 	if err == nil {
 		t.Fatal("expected error for empty query")
+	}
+	if !strings.Contains(err.Error(), "query") {
+		t.Errorf("expected query-related error, got %v", err)
 	}
 }
 
