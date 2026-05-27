@@ -70,19 +70,6 @@ func TestExpandGlobNoMatchErrors(t *testing.T) {
 	}
 }
 
-func TestReadAll(t *testing.T) {
-	dir := t.TempDir()
-	writeFile(t, filepath.Join(dir, "a.txt"), "hello")
-
-	docs, err := ReadAll([]string{filepath.Join(dir, "a.txt")})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(docs) != 1 || docs[0].Content != "hello" {
-		t.Fatalf("ReadAll = %+v", docs)
-	}
-}
-
 func TestEstimateTokens(t *testing.T) {
 	for _, tc := range []struct {
 		in   string

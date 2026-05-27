@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"claude-llama/internal/files"
 )
 
 type fakeLLM struct {
@@ -26,12 +28,21 @@ func writeFile(t *testing.T, path, content string) {
 	}
 }
 
+func newGuard(t *testing.T, root string) *files.Guard {
+	t.Helper()
+	g, err := files.NewGuard(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return g
+}
+
 func TestSummarizeSingleChunk(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, filepath.Join(dir, "a.txt"), "small content")
 
 	llm := &fakeLLM{}
-	svc := NewService(llm, 1000) // big budget => one chunk => one call
+	svc := NewService(llm, newGuard(t, dir), 1000) // big budget => one chunk => one call
 	_, err := svc.Summarize(context.Background(), []string{filepath.Join(dir, "a.txt")}, "")
 	if err != nil {
 		t.Fatal(err)
@@ -46,7 +57,7 @@ func TestSummarizeMapReduce(t *testing.T) {
 	writeFile(t, filepath.Join(dir, "a.txt"), strings.Repeat("x", 400))
 
 	llm := &fakeLLM{}
-	svc := NewService(llm, 25) // 100 chars/chunk => ~4 chunks
+	svc := NewService(llm, newGuard(t, dir), 25) // 100 chars/chunk => ~4 chunks
 	_, err := svc.Summarize(context.Background(), []string{filepath.Join(dir, "a.txt")}, "")
 	if err != nil {
 		t.Fatal(err)
@@ -62,7 +73,7 @@ func TestSummarizeMapReduce(t *testing.T) {
 
 func TestExtractEmptyQueryErrors(t *testing.T) {
 	llm := &fakeLLM{}
-	svc := NewService(llm, 1000)
+	svc := NewService(llm, newGuard(t, t.TempDir()), 1000)
 	_, err := svc.Extract(context.Background(), nil, "  ")
 	if err == nil {
 		t.Fatal("expected error for empty query")
@@ -74,7 +85,7 @@ func TestExtractEmptyQueryErrors(t *testing.T) {
 
 func TestAskNoPathsSingleCall(t *testing.T) {
 	llm := &fakeLLM{}
-	svc := NewService(llm, 1000)
+	svc := NewService(llm, newGuard(t, t.TempDir()), 1000)
 	_, err := svc.Ask(context.Background(), "draft a hello", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -89,7 +100,7 @@ func TestTooLargeErrors(t *testing.T) {
 	writeFile(t, filepath.Join(dir, "big.txt"), strings.Repeat("y", 12000))
 
 	llm := &fakeLLM{}
-	svc := NewService(llm, 1) // 4 chars/chunk => >50 chunks => ceiling error
+	svc := NewService(llm, newGuard(t, dir), 1) // 4 chars/chunk => >50 chunks => ceiling error
 	_, err := svc.Summarize(context.Background(), []string{filepath.Join(dir, "big.txt")}, "")
 	if err == nil {
 		t.Fatal("expected ceiling error for oversized input")

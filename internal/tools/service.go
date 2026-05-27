@@ -17,17 +17,18 @@ const maxChunks = 50
 
 type Service struct {
 	llm            Completer
+	guard          *files.Guard
 	maxInputTokens int
 }
 
-func NewService(llm Completer, maxInputTokens int) *Service {
-	return &Service{llm: llm, maxInputTokens: maxInputTokens}
+func NewService(llm Completer, guard *files.Guard, maxInputTokens int) *Service {
+	return &Service{llm: llm, guard: guard, maxInputTokens: maxInputTokens}
 }
 
 // mapReduce reads paths, chunks them, applies mapSystem per chunk, then combines
 // partial results with reduceSystem. With a single chunk it calls the model once.
 func (s *Service) mapReduce(ctx context.Context, paths []string, mapSystem, reduceSystem string) (string, error) {
-	docs, err := files.ReadAll(paths)
+	docs, err := s.guard.ReadAll(paths)
 	if err != nil {
 		return "", err
 	}

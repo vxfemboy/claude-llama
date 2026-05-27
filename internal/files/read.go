@@ -69,23 +69,6 @@ func hasGlobMeta(p string) bool {
 	return strings.ContainsAny(p, "*?[")
 }
 
-// ReadAll expands the given paths and reads each resulting file into a Document.
-func ReadAll(paths []string) ([]Document, error) {
-	fileList, err := Expand(paths)
-	if err != nil {
-		return nil, err
-	}
-	var docs []Document
-	for _, f := range fileList {
-		b, err := os.ReadFile(f)
-		if err != nil {
-			return nil, fmt.Errorf("read %q: %w", f, err)
-		}
-		docs = append(docs, Document{Path: f, Content: string(b)})
-	}
-	return docs, nil
-}
-
 // EstimateTokens approximates token count as len(s)/4 (rounded up).
 func EstimateTokens(s string) int {
 	return (len(s) + 3) / 4

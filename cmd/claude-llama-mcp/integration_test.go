@@ -10,6 +10,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"claude-llama/internal/config"
+	"claude-llama/internal/files"
 	"claude-llama/internal/llama"
 	"claude-llama/internal/tools"
 )
@@ -18,7 +19,11 @@ import (
 // Requires a reachable llama.cpp endpoint (LLAMA_API_URL).
 func TestSmoke(t *testing.T) {
 	cfg := config.Load()
-	svc := tools.NewService(llama.New(cfg.APIURL, cfg.Model, cfg.Timeout), cfg.MaxInputTokens)
+	guard, err := files.NewGuard(cfg.WorkspaceRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc := tools.NewService(llama.New(cfg.APIURL, cfg.Model, cfg.Timeout), guard, cfg.MaxInputTokens)
 	server := NewServer(svc)
 
 	ctx, cancel := context.WithCancel(context.Background())
