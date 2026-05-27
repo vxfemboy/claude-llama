@@ -86,14 +86,21 @@ func TestGuardDeniesSensitivePathsNested(t *testing.T) {
 }
 
 func TestIsBinaryBoundary(t *testing.T) {
+	filler := func(n int) []byte {
+		b := make([]byte, n)
+		for i := range b {
+			b[i] = 'a'
+		}
+		return b
+	}
 	// NUL within the first 512 bytes => binary.
-	within := make([]byte, 600)
+	within := filler(600)
 	within[100] = 0x00
 	if !isBinary(within) {
 		t.Error("expected NUL at byte 100 to be detected as binary")
 	}
 	// NUL only after the first 512 bytes => not detected (documented heuristic limit).
-	after := make([]byte, 600)
+	after := filler(600)
 	after[513] = 0x00
 	if isBinary(after) {
 		t.Error("expected NUL at byte 513 to be outside the 512-byte scan window")
