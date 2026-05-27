@@ -3,6 +3,7 @@ package files
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -79,5 +80,36 @@ func TestReadAll(t *testing.T) {
 	}
 	if len(docs) != 1 || docs[0].Content != "hello" {
 		t.Fatalf("ReadAll = %+v", docs)
+	}
+}
+
+func TestEstimateTokens(t *testing.T) {
+	if got := EstimateTokens("12345678"); got != 2 {
+		t.Errorf("EstimateTokens(8 chars) = %d, want 2", got)
+	}
+	if got := EstimateTokens(""); got != 0 {
+		t.Errorf("EstimateTokens(\"\") = %d, want 0", got)
+	}
+}
+
+func TestChunkPacksSmallDocs(t *testing.T) {
+	docs := []Document{
+		{Path: "a", Content: "aaaa"},
+		{Path: "b", Content: "bbbb"},
+	}
+	chunks := Chunk(docs, 1000)
+	if len(chunks) != 1 {
+		t.Fatalf("got %d chunks, want 1", len(chunks))
+	}
+	if !strings.Contains(chunks[0], "// file: a") || !strings.Contains(chunks[0], "// file: b") {
+		t.Errorf("chunk missing file headers: %q", chunks[0])
+	}
+}
+
+func TestChunkSplitsOversizedDoc(t *testing.T) {
+	docs := []Document{{Path: "big", Content: strings.Repeat("x", 400)}}
+	chunks := Chunk(docs, 25) // 100 chars/chunk => multiple chunks
+	if len(chunks) < 2 {
+		t.Fatalf("got %d chunks, want >= 2", len(chunks))
 	}
 }

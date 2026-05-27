@@ -85,3 +85,46 @@ func ReadAll(paths []string) ([]Document, error) {
 	}
 	return docs, nil
 }
+
+// EstimateTokens approximates token count as len(s)/4 (rounded up).
+func EstimateTokens(s string) int {
+	return (len(s) + 3) / 4
+}
+
+// Chunk packs documents into chunks whose estimated token count stays under
+// maxTokens. Each document is prefixed with a "// file: <path>" header.
+// A single document larger than the budget is split across multiple chunks.
+func Chunk(docs []Document, maxTokens int) []string {
+	maxChars := maxTokens * 4
+	if maxChars <= 0 {
+		maxChars = 1
+	}
+	var chunks []string
+	var b strings.Builder
+	flush := func() {
+		if b.Len() > 0 {
+			chunks = append(chunks, b.String())
+			b.Reset()
+		}
+	}
+	for _, d := range docs {
+		body := fmt.Sprintf("// file: %s\n%s\n", d.Path, d.Content)
+		if len(body) <= maxChars {
+			if b.Len()+len(body) > maxChars {
+				flush()
+			}
+			b.WriteString(body)
+			continue
+		}
+		flush()
+		for start := 0; start < len(body); start += maxChars {
+			end := start + maxChars
+			if end > len(body) {
+				end = len(body)
+			}
+			chunks = append(chunks, body[start:end])
+		}
+	}
+	flush()
+	return chunks
+}
