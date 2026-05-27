@@ -12,16 +12,16 @@ import (
 )
 
 type Client struct {
-	baseURL string
-	model   string
-	http    *http.Client
+	baseURL    string
+	model      string
+	httpClient *http.Client
 }
 
 func New(baseURL, model string, timeout time.Duration) *Client {
 	return &Client{
 		baseURL: strings.TrimRight(baseURL, "/"),
 		model:   model,
-		http:    &http.Client{Timeout: timeout},
+		httpClient: &http.Client{Timeout: timeout},
 	}
 }
 
@@ -62,15 +62,18 @@ func (c *Client) Complete(ctx context.Context, system, user string) (string, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := c.http.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("llama request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
+	body, readErr := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("llama returned %d: %s", resp.StatusCode, string(body))
+	}
+	if readErr != nil {
+		return "", fmt.Errorf("read llama response body: %w", readErr)
 	}
 
 	var cr chatResponse

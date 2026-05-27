@@ -34,6 +34,32 @@ func TestCompleteSuccess(t *testing.T) {
 	if gotBody["model"] != "test-model" {
 		t.Errorf("request model = %v", gotBody["model"])
 	}
+	msgs, _ := gotBody["messages"].([]any)
+	if len(msgs) != 2 {
+		t.Fatalf("expected 2 messages, got %d", len(msgs))
+	}
+	sys, _ := msgs[0].(map[string]any)
+	if sys["role"] != "system" || sys["content"] != "be brief" {
+		t.Errorf("unexpected system message: %v", sys)
+	}
+	usr, _ := msgs[1].(map[string]any)
+	if usr["role"] != "user" || usr["content"] != "say hi" {
+		t.Errorf("unexpected user message: %v", usr)
+	}
+}
+
+func TestCompleteEmptyChoices(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		io.WriteString(w, `{"choices":[]}`)
+	}))
+	defer srv.Close()
+
+	c := New(srv.URL, "test-model", 5*time.Second)
+	_, err := c.Complete(context.Background(), "", "hi")
+	if err == nil {
+		t.Fatal("expected error for empty choices")
+	}
 }
 
 func TestCompleteHTTPError(t *testing.T) {
