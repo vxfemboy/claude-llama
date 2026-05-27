@@ -91,12 +91,12 @@ func TestCompleteConnectionFailure(t *testing.T) {
 
 func TestCompleteTimeout(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 		io.WriteString(w, `{"choices":[{"message":{"content":"late"}}]}`)
 	}))
 	defer srv.Close()
 
-	c := New(srv.URL, "test-model", 20*time.Millisecond)
+	c := New(srv.URL, "test-model", 50*time.Millisecond)
 	_, err := c.Complete(context.Background(), "", "hi")
 	if err == nil {
 		t.Fatal("expected timeout error")
