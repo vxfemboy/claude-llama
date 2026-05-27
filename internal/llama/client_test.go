@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -73,5 +74,34 @@ func TestCompleteHTTPError(t *testing.T) {
 	_, err := c.Complete(context.Background(), "", "hi")
 	if err == nil {
 		t.Fatal("expected error on 500, got nil")
+	}
+}
+
+func TestCompleteConnectionFailure(t *testing.T) {
+	// Port 1 is not listenable; Do should fail to connect.
+	c := New("http://127.0.0.1:1", "test-model", 2*time.Second)
+	_, err := c.Complete(context.Background(), "", "hi")
+	if err == nil {
+		t.Fatal("expected connection error")
+	}
+	if !strings.Contains(err.Error(), "unreachable") {
+		t.Errorf("expected 'unreachable' message, got %v", err)
+	}
+}
+
+func TestCompleteTimeout(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(200 * time.Millisecond)
+		io.WriteString(w, `{"choices":[{"message":{"content":"late"}}]}`)
+	}))
+	defer srv.Close()
+
+	c := New(srv.URL, "test-model", 20*time.Millisecond)
+	_, err := c.Complete(context.Background(), "", "hi")
+	if err == nil {
+		t.Fatal("expected timeout error")
+	}
+	if !strings.Contains(err.Error(), "timeout") {
+		t.Errorf("expected 'timeout' message, got %v", err)
 	}
 }

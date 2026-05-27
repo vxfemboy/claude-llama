@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -64,7 +66,10 @@ func (c *Client) Complete(ctx context.Context, system, user string) (string, err
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("llama request failed: %w", err)
+		if isTimeout(err) {
+			return "", fmt.Errorf("llama timeout contacting %s; consider reducing input size: %w", c.baseURL, err)
+		}
+		return "", fmt.Errorf("llama.cpp unreachable at %s; check that the server is running: %w", c.baseURL, err)
 	}
 	defer resp.Body.Close()
 
@@ -84,4 +89,15 @@ func (c *Client) Complete(ctx context.Context, system, user string) (string, err
 		return "", fmt.Errorf("llama returned no choices")
 	}
 	return cr.Choices[0].Message.Content, nil
+}
+
+func isTimeout(err error) bool {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return true
+	}
+	var ne net.Error
+	if errors.As(err, &ne) {
+		return ne.Timeout()
+	}
+	return false
 }
