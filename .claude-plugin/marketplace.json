@@ -1,0 +1,15 @@
+{
+  "name": "claude-llama",
+  "owner": {
+    "name": "vxfemboy"
+  },
+  "plugins": [
+    {
+      "name": "claude-llama",
+      "version": "1.0.0",
+      "description": "Delegate token-heavy file work (summarize, extract, ask) to a local llama.cpp model so the bulk content never enters Claude's context.",
+      "source": "./",
+      "category": "development"
+    }
+  ]
+}
