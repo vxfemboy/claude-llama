@@ -94,7 +94,7 @@ func (r *Recorder) Record(row Row) {
 	if err != nil {
 		return
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	buf, err := json.Marshal(row)
 	if err != nil {

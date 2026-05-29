@@ -90,7 +90,7 @@ func (c *HealthClient) FetchProps(ctx context.Context) (Props, error) {
 	if err != nil {
 		return Props{}, fmt.Errorf("fetch /props: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return Props{}, fmt.Errorf("/props returned HTTP %d", resp.StatusCode)
 	}
@@ -141,7 +141,7 @@ func (c *HealthClient) Check(ctx context.Context) (HealthResult, error) {
 		res.ErrorKind = classifyTransport(err)
 		return res, fmt.Errorf("llama unreachable at %s: %w", c.baseURL, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {

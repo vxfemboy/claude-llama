@@ -20,7 +20,7 @@ func TestCompleteSuccess(t *testing.T) {
 		b, _ := io.ReadAll(r.Body)
 		_ = json.Unmarshal(b, &gotBody)
 		w.Header().Set("Content-Type", "application/json")
-		io.WriteString(w, `{"choices":[{"message":{"role":"assistant","content":"hi there"}}]}`)
+		_, _ = io.WriteString(w, `{"choices":[{"message":{"role":"assistant","content":"hi there"}}]}`)
 	}))
 	defer srv.Close()
 
@@ -52,7 +52,7 @@ func TestCompleteSuccess(t *testing.T) {
 func TestCompleteEmptyChoices(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		io.WriteString(w, `{"choices":[]}`)
+		_, _ = io.WriteString(w, `{"choices":[]}`)
 	}))
 	defer srv.Close()
 
@@ -66,7 +66,7 @@ func TestCompleteEmptyChoices(t *testing.T) {
 func TestCompleteHTTPError(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		io.WriteString(w, "boom")
+		_, _ = io.WriteString(w, "boom")
 	}))
 	defer srv.Close()
 
@@ -92,7 +92,7 @@ func TestCompleteConnectionFailure(t *testing.T) {
 func TestCompleteTimeout(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(500 * time.Millisecond)
-		io.WriteString(w, `{"choices":[{"message":{"content":"late"}}]}`)
+		_, _ = io.WriteString(w, `{"choices":[{"message":{"content":"late"}}]}`)
 	}))
 	defer srv.Close()
 

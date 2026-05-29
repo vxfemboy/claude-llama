@@ -75,7 +75,7 @@ func (c *Client) Complete(ctx context.Context, system, user string) (string, err
 		}
 		return "", fmt.Errorf("llama.cpp unreachable at %s; check that the server is running: %w", c.baseURL, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, readErr := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {

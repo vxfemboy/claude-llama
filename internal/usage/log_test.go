@@ -51,7 +51,7 @@ func TestRecorderAppendsJSONL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	var rows []Row
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {

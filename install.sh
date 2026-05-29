@@ -36,9 +36,10 @@ case "$os" in
 esac
 
 if [[ "$VERSION" == "latest" ]]; then
-  VERSION=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" \
-    | grep '"tag_name"' | head -n1 | sed -E 's/.*"([^"]+)".*/\1/')
-  [[ -n "$VERSION" ]] || die "could not resolve latest version"
+  resp=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null) \
+    || die "no published releases found for ${REPO}. Cut one by pushing a version tag (e.g. \`git tag v0.1.0 && git push origin v0.1.0\`), then re-run. See https://github.com/${REPO}/releases"
+  VERSION=$(printf '%s' "$resp" | grep '"tag_name"' | head -n1 | sed -E 's/.*"([^"]+)".*/\1/')
+  [[ -n "$VERSION" ]] || die "could not resolve latest version from ${REPO}"
 fi
 ver_noV="${VERSION#v}"
 
@@ -50,8 +51,10 @@ url="https://github.com/${REPO}/releases/download/${VERSION}/${archive}"
 sums_url="https://github.com/${REPO}/releases/download/${VERSION}/checksums.txt"
 
 say "downloading $archive"
-curl -fsSL "$url" -o "$tmp/$archive"
-curl -fsSL "$sums_url" -o "$tmp/checksums.txt"
+curl -fsSL "$url" -o "$tmp/$archive" \
+  || die "could not download $archive from release $VERSION. Check that release exists at https://github.com/${REPO}/releases/tag/${VERSION}"
+curl -fsSL "$sums_url" -o "$tmp/checksums.txt" \
+  || die "could not download checksums.txt for release $VERSION"
 
 say "verifying checksum"
 (cd "$tmp" && grep " $archive\$" checksums.txt | sha256sum -c -) >/dev/null || die "checksum failed"

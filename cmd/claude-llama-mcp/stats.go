@@ -75,7 +75,7 @@ func readRows(path, since, tool string) ([]usage.Row, error) {
 		}
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var rows []usage.Row
 	sc := bufio.NewScanner(f)

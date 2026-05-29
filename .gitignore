@@ -1,1 +1,40 @@
+# Build output
 /bin/
+/dist/
+
+# Go build & test artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.*
+*.prof
+
+# Go workspace files (local-only)
+go.work
+go.work.sum
+
+# Local environment / secrets
+.env
+*.env
+
+# Logs
+*.log
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Agent / tooling local state
+.claude/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+Desktop.ini
