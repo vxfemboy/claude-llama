@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Installed by `make setup`. Blocks commits that contain ungofmt'd Go or fail golangci-lint.
+set -euo pipefail
+
+staged=$(git diff --cached --name-only --diff-filter=ACM | grep '\.go$' || true)
+if [[ -z "$staged" ]]; then
+  exit 0
+fi
+
+unformatted=$(gofmt -l $staged)
+if [[ -n "$unformatted" ]]; then
+  echo "gofmt issues in:"
+  echo "$unformatted"
+  echo "run: gofmt -w $unformatted"
+  exit 1
+fi
+
+if command -v golangci-lint >/dev/null 2>&1; then
+  golangci-lint run --new-from-rev=HEAD~1 || exit 1
+fi
