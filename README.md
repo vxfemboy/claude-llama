@@ -8,8 +8,10 @@ Every response carries a footer like:
 
 ```
 ---
-[claude-llama] input=12,480 tok · returned=380 tok · saved≈12,100 tok · model=Qwen3.5-9B · 4.2s
+[claude-llama] input=7,992 tok · returned=931 tok · saved≈7,061 tok · model=Qwen3.5-9B · 141s
 ```
+
+(real numbers from summarizing a 32KB plan doc — see [Real-world savings](#real-world-savings) for the full matrix.)
 
 The savings are also appended to a JSONL log; `claude-llama-mcp stats` summarizes it. CI guards the savings claim with a benchmark.
 
@@ -68,6 +70,35 @@ Set any value to `0`, `false`, `no`, or `off` to disable a boolean.
 - **`llama_extract`** `(paths, query)` — pull only snippets matching `query`.
 - **`llama_ask`** `(prompt, paths?)` — delegate a self-contained task; paths are optional context.
 - **`llama_health`** `()` — JSON status: `{ok, url, models, latency_ms, error}`. Lets Claude self-diagnose before relying on the MCP for a big job.
+
+## Real-world savings
+
+Measured against this repo's own files with a Qwen3.5-9B Q8 model on
+local hardware (your mileage will vary with model + GPU):
+
+| Fixture                | Tool              | Input tok | Returned tok | Saved | %    | Duration |
+|------------------------|-------------------|----------:|-------------:|------:|-----:|---------:|
+| 3KB Go source          | `llama_summarize` |       734 |          409 |   325 |  44% |    1m28s |
+| 15KB design spec       | `llama_summarize` |     3,824 |        1,626 | 2,198 |  57% |    2m38s |
+| 32KB plan              | `llama_summarize` |     7,992 |          931 | 7,061 |  88% |    2m21s |
+| 15KB design spec       | `llama_extract`   |     3,824 |          387 | 3,437 |  90% |     3m4s |
+| `llama_ask` (no paths) | `llama_ask`       |        13 |           46 |     0 |   0% |    1m10s |
+
+Read this as: **delegation pays off once you'd be reading more than a
+few KB into Claude's context.** Below ~3KB the local model's reply is
+nearly as long as the input — net savings are small and you'd be better
+off having Claude read the file directly. Above ~10KB savings grow fast,
+and `llama_extract` beats `llama_summarize` because it returns only
+matching snippets instead of a whole summary. `llama_ask` with no paths
+is a wash on tokens (the prompt and answer are both tiny) — its purpose
+is offloading bulky generation, not saving context.
+
+The trade-off is latency: 1-3 minutes per call on this hardware vs. a
+few seconds for Claude's API. Use this MCP when the *token cost* of the
+work matters more than the wall-clock; skip it for snappy interactions.
+
+Reproduce with `make integration` against a live llama, or look at the
+matrix test at `cmd/claude-llama-mcp/real_savings_test.go`.
 
 ## Verifying the savings
 
