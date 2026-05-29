@@ -13,6 +13,7 @@ import (
 	"claude-llama/internal/files"
 	"claude-llama/internal/llama"
 	"claude-llama/internal/tools"
+	"claude-llama/internal/usage"
 )
 
 // Run with: go test -tags integration ./cmd/claude-llama-mcp/ -run TestSmoke -v
@@ -24,7 +25,7 @@ func TestSmoke(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc := tools.NewService(llama.New(cfg.APIURL, cfg.Model, cfg.Timeout), guard, cfg.MaxInputTokens)
-	server := NewServer(svc)
+	server := NewServer(svc, cfg, usage.NewRecorder(cfg))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
