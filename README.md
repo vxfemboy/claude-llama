@@ -28,8 +28,11 @@ Downloads the latest release binary for your OS/arch, verifies the checksum, dro
 **As a Claude Code plugin:**
 
 ```
-/plugin install vxfemboy/claude-llama
+/plugin marketplace add vxfemboy/claude-llama
+/plugin install claude-llama:claude-llama
 ```
+
+(then `/reload-plugins`)
 
 **From source:**
 
@@ -73,8 +76,25 @@ Set any value to `0`, `false`, `no`, or `off` to disable a boolean.
 
 ## Real-world savings
 
-Measured against this repo's own files with a Qwen3.5-9B Q8 model on
-local hardware (your mileage will vary with model + GPU):
+### In the wild
+
+Two `llama_summarize` calls during a single cross-project session
+(separate Rust repo, same Qwen3.5-9B Q8 model on `hack-mini:8080`):
+
+| Call                                       | Input tok | Returned tok |   Saved | Duration |
+|--------------------------------------------|----------:|-------------:|--------:|---------:|
+| `src/` + `README.md` + `Cargo.toml`        |    34,247 |          535 |  33,712 |   10m48s |
+| config + docker + `scripts/` + `tests/`    |     3,914 |          528 |   3,386 |    1m51s |
+| **Total**                                  |**38,161** |    **1,063** |**37,098** | **12m39s** |
+
+**~97% of bulk file content kept out of Claude's context** at a cost of
+~13 minutes of local inference. Pulled from
+`claude-llama-mcp stats --json`.
+
+### Benchmark matrix
+
+Measured against this repo's own files (Qwen3.5-9B Q8, local hardware —
+your mileage will vary with model + GPU):
 
 | Fixture                | Tool              | Input tok | Returned tok | Saved | %    | Duration |
 |------------------------|-------------------|----------:|-------------:|------:|-----:|---------:|
