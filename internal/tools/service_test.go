@@ -43,7 +43,7 @@ func TestSummarizeSingleChunk(t *testing.T) {
 
 	llm := &fakeLLM{}
 	svc := NewService(llm, newGuard(t, dir), 1000) // big budget => one chunk => one call
-	_, err := svc.Summarize(context.Background(), []string{filepath.Join(dir, "a.txt")}, "")
+	_, _, err := svc.Summarize(context.Background(), []string{filepath.Join(dir, "a.txt")}, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +58,7 @@ func TestSummarizeMapReduce(t *testing.T) {
 
 	llm := &fakeLLM{}
 	svc := NewService(llm, newGuard(t, dir), 25) // 100 chars/chunk => ~4 chunks
-	_, err := svc.Summarize(context.Background(), []string{filepath.Join(dir, "a.txt")}, "")
+	_, _, err := svc.Summarize(context.Background(), []string{filepath.Join(dir, "a.txt")}, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestSummarizeMapReduce(t *testing.T) {
 func TestExtractEmptyQueryErrors(t *testing.T) {
 	llm := &fakeLLM{}
 	svc := NewService(llm, newGuard(t, t.TempDir()), 1000)
-	_, err := svc.Extract(context.Background(), nil, "  ")
+	_, _, err := svc.Extract(context.Background(), nil, "  ")
 	if err == nil {
 		t.Fatal("expected error for empty query")
 	}
@@ -86,7 +86,7 @@ func TestExtractEmptyQueryErrors(t *testing.T) {
 func TestAskNoPathsSingleCall(t *testing.T) {
 	llm := &fakeLLM{}
 	svc := NewService(llm, newGuard(t, t.TempDir()), 1000)
-	_, err := svc.Ask(context.Background(), "draft a hello", nil)
+	_, _, err := svc.Ask(context.Background(), "draft a hello", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +101,7 @@ func TestTooLargeErrors(t *testing.T) {
 
 	llm := &fakeLLM{}
 	svc := NewService(llm, newGuard(t, dir), 1) // 4 chars/chunk => >50 chunks => ceiling error
-	_, err := svc.Summarize(context.Background(), []string{filepath.Join(dir, "big.txt")}, "")
+	_, _, err := svc.Summarize(context.Background(), []string{filepath.Join(dir, "big.txt")}, "")
 	if err == nil {
 		t.Fatal("expected ceiling error for oversized input")
 	}
@@ -112,7 +112,7 @@ func TestSummarizePromptHasFormatGuidance(t *testing.T) {
 	writeFile(t, filepath.Join(dir, "a.txt"), "content")
 	llm := &fakeLLM{}
 	svc := NewService(llm, newGuard(t, dir), 1000)
-	if _, err := svc.Summarize(context.Background(), []string{filepath.Join(dir, "a.txt")}, ""); err != nil {
+	if _, _, err := svc.Summarize(context.Background(), []string{filepath.Join(dir, "a.txt")}, ""); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(llm.systems[0], "only the summary") {
